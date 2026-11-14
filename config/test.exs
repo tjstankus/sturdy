@@ -33,3 +33,6 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# A clock tests can set; it tells the real time until they do.
+config :sturdy, :clock, Sturdy.SettableClock

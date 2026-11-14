@@ -9,9 +9,9 @@ defmodule Sturdy.LocalTime do
   @spec timezone() :: timezone()
   def timezone, do: Application.fetch_env!(:sturdy, :timezone)
 
-  @doc "Today's local date."
+  @doc "Today's local date, by `Sturdy.Clock`."
   @spec today() :: Date.t()
-  def today, do: date_of(DateTime.utc_now())
+  def today, do: date_of(Sturdy.Clock.utc_now())
 
   @doc "The local date of a UTC timestamp."
   @spec date_of(DateTime.t()) :: Date.t()

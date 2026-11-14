@@ -9,6 +9,7 @@ defmodule SturdyWeb.CompletedSetLive.Form do
   import SturdyWeb.SetComponents
 
   alias Sturdy.Catalog
+  alias Sturdy.Clock
   alias Sturdy.LocalTime
   alias Sturdy.Training
   alias Sturdy.Training.CompletedSet
@@ -27,7 +28,7 @@ defmodule SturdyWeb.CompletedSetLive.Form do
     # Today defaults to now; another day defaults to its local noon.
     default_time = fn date ->
       if date == LocalTime.today(),
-        do: DateTime.utc_now(:second),
+        do: Clock.utc_now(),
         else: date |> NaiveDateTime.new!(~T[12:00:00]) |> LocalTime.from_local()
     end
 

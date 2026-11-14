@@ -15,6 +15,9 @@ config :sturdy,
 # completed_at in this timezone.
 config :sturdy, :timezone, "America/New_York"
 
+# Where "now" comes from. Tests swap in a clock they can set.
+config :sturdy, :clock, Sturdy.Clock.System
+
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
 # Configure the endpoint

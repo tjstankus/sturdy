@@ -7,6 +7,7 @@ defmodule Sturdy.Training do
 
   alias Ecto.Changeset
   alias Ecto.Multi
+  alias Sturdy.Clock
   alias Sturdy.Repo
   alias Sturdy.Training.CompletedSet
   alias Sturdy.Training.Day
@@ -119,7 +120,7 @@ defmodule Sturdy.Training do
   Edit the result with `update_completed_set/2` if reality differed.
   """
   @spec complete_planned_set(PlannedSet.t(), DateTime.t()) :: result(CompletedSet.t())
-  def complete_planned_set(%PlannedSet{} = planned_set, completed_at \\ DateTime.utc_now(:second)) do
+  def complete_planned_set(%PlannedSet{} = planned_set, completed_at \\ Clock.utc_now()) do
     planned_set
     |> current()
     |> CompletedSet.from_plan_changeset(completed_at)
