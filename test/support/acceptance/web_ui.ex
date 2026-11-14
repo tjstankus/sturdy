@@ -58,6 +58,10 @@ defmodule Sturdy.Acceptance.WebUI do
   @spec movement_screen() :: String.t()
   def movement_screen, do: "#delete-movement"
 
+  @doc "Shows the system refused a submitted form: field errors or an error flash."
+  @spec refusal() :: String.t()
+  def refusal, do: "p.text-error, #flash-error"
+
   @spec edit_screen() :: String.t()
   def edit_screen, do: @edit_forms |> Map.keys() |> Enum.map_join(", ", &"##{&1}")
 
@@ -103,6 +107,10 @@ defmodule Sturdy.Acceptance.WebUI do
     |> attribute()
     |> then(&"##{&1}")
   end
+
+  @doc "The tag filter once it is the one applied."
+  @spec active_filter(String.t()) :: String.t()
+  def active_filter(filter), do: "#{filter}.badge-primary"
 
   ## Plan form: which date the form opens on, and how its chosen dates change
 
@@ -261,7 +269,7 @@ defmodule Sturdy.Acceptance.WebUI do
   def errors(html) do
     html
     |> LazyHTML.from_document()
-    |> LazyHTML.query(".text-error, #flash-error")
+    |> LazyHTML.query(refusal())
     |> Enum.map(&text/1)
   end
 
