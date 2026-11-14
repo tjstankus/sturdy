@@ -33,17 +33,18 @@ defmodule Sturdy.Body do
   def get_bodyweight_entry!(id), do: Repo.get!(BodyweightEntry, id)
 
   @spec create_bodyweight_entry(map()) :: result(BodyweightEntry.t())
-  def create_bodyweight_entry(attrs) do
-    %BodyweightEntry{}
-    |> BodyweightEntry.changeset(attrs)
-    |> Repo.insert()
-  end
+  def create_bodyweight_entry(attrs), do: save_bodyweight_entry(%BodyweightEntry{}, attrs)
 
   @spec update_bodyweight_entry(BodyweightEntry.t(), map()) :: result(BodyweightEntry.t())
-  def update_bodyweight_entry(%BodyweightEntry{} = entry, attrs) do
+  def update_bodyweight_entry(%BodyweightEntry{} = entry, attrs),
+    do: save_bodyweight_entry(entry, attrs)
+
+  @doc "Inserts a new entry or updates a loaded one."
+  @spec save_bodyweight_entry(BodyweightEntry.t(), map()) :: result(BodyweightEntry.t())
+  def save_bodyweight_entry(%BodyweightEntry{} = entry, attrs) do
     entry
     |> BodyweightEntry.changeset(attrs)
-    |> Repo.update()
+    |> Repo.insert_or_update()
   end
 
   @spec delete_bodyweight_entry(BodyweightEntry.t()) :: result(BodyweightEntry.t())

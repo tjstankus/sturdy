@@ -112,24 +112,26 @@ defmodule Sturdy.Catalog do
     |> Repo.preload([:videos, tags: :tag_category])
   end
 
+  @doc "A new, unsaved movement, ready for `save_movement/2` or a form."
+  @spec new_movement() :: Movement.t()
+  def new_movement, do: %Movement{videos: [], tags: []}
+
   @spec create_movement(map()) :: result(Movement.t())
-  def create_movement(attrs) do
-    %Movement{videos: [], tags: []}
-    |> Movement.changeset(attrs)
-    |> resolve_tags()
-    |> Repo.insert()
-  end
+  def create_movement(attrs), do: save_movement(new_movement(), attrs)
+
+  @spec update_movement(Movement.t(), map()) :: result(Movement.t())
+  def update_movement(%Movement{} = movement, attrs), do: save_movement(movement, attrs)
 
   @doc """
-  Updates a movement. The movement must have `:videos` and `:tags` preloaded
-  (as `get_movement!/1` returns it).
+  Inserts a new movement or updates a loaded one. A loaded movement must have
+  `:videos` and `:tags` preloaded (as `get_movement!/1` returns it).
   """
-  @spec update_movement(Movement.t(), map()) :: result(Movement.t())
-  def update_movement(%Movement{} = movement, attrs) do
+  @spec save_movement(Movement.t(), map()) :: result(Movement.t())
+  def save_movement(%Movement{} = movement, attrs) do
     movement
     |> Movement.changeset(attrs)
     |> resolve_tags()
-    |> Repo.update()
+    |> Repo.insert_or_update()
   end
 
   @doc """
@@ -140,11 +142,11 @@ defmodule Sturdy.Catalog do
   def delete_movement(%Movement{} = movement) do
     movement
     |> Changeset.change()
-    |> Changeset.foreign_key_constraint(:id,
+    |> Changeset.foreign_key_constraint(:movement,
       name: :planned_sets_movement_id_fkey,
       message: "has planned sets"
     )
-    |> Changeset.foreign_key_constraint(:id,
+    |> Changeset.foreign_key_constraint(:movement,
       name: :completed_sets_movement_id_fkey,
       message: "has completed sets"
     )

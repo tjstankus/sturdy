@@ -19,6 +19,21 @@ defmodule Sturdy.Training do
   @spec day(Date.t()) :: [Day.group()]
   defdelegate day(date), to: Day, as: :for_date
 
+  @doc "See `Sturdy.Training.Day.date_of/1`."
+  @spec day_of(CompletedSet.t()) :: Date.t()
+  defdelegate day_of(completed_set), to: Day, as: :date_of
+
+  @doc "A movement's most recent completed sets, newest first."
+  @spec recent_completed_sets(integer(), pos_integer()) :: [CompletedSet.t()]
+  def recent_completed_sets(movement_id, limit \\ 20) do
+    Repo.all(
+      from c in CompletedSet,
+        where: c.movement_id == ^movement_id,
+        order_by: [desc: c.completed_at, desc: c.id],
+        limit: ^limit
+    )
+  end
+
   # Planned sets
 
   @doc "A planned set with its movement and completion preloaded."
@@ -31,6 +46,15 @@ defmodule Sturdy.Training do
   def change_planned_set(%PlannedSet{} = planned_set, attrs \\ %{}) do
     PlannedSet.changeset(planned_set, attrs)
   end
+
+  @doc "A changeset for scheduling options, for forms."
+  @spec change_schedule(map()) :: Changeset.t()
+  def change_schedule(attrs \\ %{}), do: Schedule.changeset(%Schedule{}, attrs)
+
+  @doc "How many planned sets the schedule in a changeset would create."
+  @spec schedule_set_count(Changeset.t()) :: non_neg_integer()
+  def schedule_set_count(%Changeset{data: %Schedule{}} = changeset),
+    do: changeset |> Changeset.apply_changes() |> Schedule.set_count()
 
   @doc """
   Plans sets from one template (`plan_attrs`, without a date) and a schedule
@@ -116,17 +140,18 @@ defmodule Sturdy.Training do
 
   @doc "Records unplanned work."
   @spec create_completed_set(map()) :: result(CompletedSet.t())
-  def create_completed_set(attrs) do
-    %CompletedSet{}
-    |> CompletedSet.changeset(attrs)
-    |> Repo.insert()
-  end
+  def create_completed_set(attrs), do: save_completed_set(%CompletedSet{}, attrs)
 
   @spec update_completed_set(CompletedSet.t(), map()) :: result(CompletedSet.t())
-  def update_completed_set(%CompletedSet{} = completed_set, attrs) do
+  def update_completed_set(%CompletedSet{} = completed_set, attrs),
+    do: save_completed_set(completed_set, attrs)
+
+  @doc "Inserts new unplanned work or updates a loaded completed set."
+  @spec save_completed_set(CompletedSet.t(), map()) :: result(CompletedSet.t())
+  def save_completed_set(%CompletedSet{} = completed_set, attrs) do
     completed_set
     |> CompletedSet.changeset(attrs)
-    |> Repo.update()
+    |> Repo.insert_or_update()
   end
 
   @doc "Deletes a completed set. A plan it completed becomes pending again."

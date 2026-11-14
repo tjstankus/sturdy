@@ -39,6 +39,13 @@ defmodule Sturdy.Training.CompletedSetTest do
     end
   end
 
+  test "editable_fields/1: a completed plan's movement and side are fixed" do
+    assert :movement_id in CompletedSet.editable_fields(%CompletedSet{})
+    assert :side in CompletedSet.editable_fields(%CompletedSet{})
+    refute :movement_id in CompletedSet.editable_fields(%CompletedSet{planned_set_id: 1})
+    refute :side in CompletedSet.editable_fields(%CompletedSet{planned_set_id: 1})
+  end
+
   describe "changeset/2" do
     test "an unplanned set can change movement and side" do
       changeset =

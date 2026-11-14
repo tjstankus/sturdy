@@ -34,7 +34,7 @@ defmodule Sturdy.CatalogTest do
       tag_fixture(%{tag_category_id: category.id})
 
       assert {:error, changeset} = Catalog.delete_tag_category(category)
-      assert %{tags: ["still has tags"]} = errors_on(changeset)
+      assert %{category: ["still has tags"]} = errors_on(changeset)
     end
 
     test "an empty category can be deleted" do

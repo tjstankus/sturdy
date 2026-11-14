@@ -20,6 +20,16 @@ defmodule Sturdy.Training.Day do
   @type group :: %{movement: Movement.t(), entries: [Entry.t(), ...]}
 
   @doc """
+  The day a completed set appears on: its plan's date when it completed a plan
+  (requires `:planned_set` preloaded), otherwise the local date it happened.
+  """
+  @spec date_of(CompletedSet.t()) :: Date.t()
+  def date_of(%CompletedSet{planned_set_id: nil, completed_at: completed_at}),
+    do: LocalTime.date_of(completed_at)
+
+  def date_of(%CompletedSet{planned_set: %PlannedSet{planned_on: planned_on}}), do: planned_on
+
+  @doc """
   The day's entries grouped by movement. Groups are ordered by when each
   movement entered the day; entries within a group by `Entry.sort_key`.
   """

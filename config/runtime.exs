@@ -41,6 +41,11 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
+  # Single-user app without accounts: every page is behind HTTP basic auth.
+  config :sturdy, :basic_auth,
+    username: System.fetch_env!("STURDY_USERNAME"),
+    password: System.fetch_env!("STURDY_PASSWORD")
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """

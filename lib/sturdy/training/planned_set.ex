@@ -89,7 +89,10 @@ defmodule Sturdy.Training.PlannedSet do
   def delete_changeset(planned_set) do
     planned_set
     |> change()
-    |> no_assoc_constraint(:completed_set, message: "has been completed")
+    |> foreign_key_constraint(:planned_set,
+      name: :completed_sets_planned_set_id_fkey,
+      message: "has been completed"
+    )
   end
 
   @spec state(t()) :: state()

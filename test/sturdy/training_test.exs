@@ -137,7 +137,7 @@ defmodule Sturdy.TrainingTest do
       {:ok, _} = Training.complete_planned_set(plan)
 
       assert {:error, changeset} = Training.delete_planned_set(plan)
-      assert %{completed_set: ["has been completed"]} = errors_on(changeset)
+      assert %{planned_set: ["has been completed"]} = errors_on(changeset)
     end
 
     test "change_planned_set/2 returns a changeset" do
@@ -172,17 +172,43 @@ defmodule Sturdy.TrainingTest do
     end
   end
 
+  describe "day_of/1 and recent_completed_sets/2" do
+    test "a completed plan belongs to its plan's day; unplanned work to its local date" do
+      plan = planned_set_fixture(%{planned_on: ~D[2026-11-10]})
+      {:ok, done} = Training.complete_planned_set(plan, ~U[2026-11-11 15:00:00Z])
+      unplanned = completed_set_fixture(%{completed_at: ~U[2026-11-12 04:30:00Z]})
+
+      assert Training.day_of(Training.get_completed_set!(done.id)) == ~D[2026-11-10]
+      assert Training.day_of(unplanned) == ~D[2026-11-11]
+    end
+
+    test "recent completed sets for a movement, newest first" do
+      movement = movement_fixture()
+
+      old =
+        completed_set_fixture(%{movement_id: movement.id, completed_at: ~U[2026-11-01 12:00:00Z]})
+
+      new =
+        completed_set_fixture(%{movement_id: movement.id, completed_at: ~U[2026-11-09 12:00:00Z]})
+
+      completed_set_fixture()
+
+      assert Enum.map(Training.recent_completed_sets(movement.id), & &1.id) == [new.id, old.id]
+      assert [_] = Training.recent_completed_sets(movement.id, 1)
+    end
+  end
+
   describe "movement deletion is restricted by training history" do
     test "a movement with planned sets cannot be deleted" do
       plan = planned_set_fixture()
       assert {:error, changeset} = Catalog.delete_movement(plan.movement)
-      assert %{id: ["has planned sets"]} = errors_on(changeset)
+      assert %{movement: ["has planned sets"]} = errors_on(changeset)
     end
 
     test "a movement with completed sets cannot be deleted" do
       completed = completed_set_fixture() |> Repo.preload(:movement)
       assert {:error, changeset} = Catalog.delete_movement(completed.movement)
-      assert %{id: ["has completed sets"]} = errors_on(changeset)
+      assert %{movement: ["has completed sets"]} = errors_on(changeset)
     end
   end
 end

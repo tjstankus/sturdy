@@ -43,6 +43,9 @@ defmodule Sturdy.Catalog.TagCategory do
   def delete_changeset(category) do
     category
     |> change()
-    |> no_assoc_constraint(:tags, message: "still has tags")
+    |> foreign_key_constraint(:category,
+      name: :tags_tag_category_id_fkey,
+      message: "still has tags"
+    )
   end
 end

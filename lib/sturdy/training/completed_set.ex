@@ -51,17 +51,20 @@ defmodule Sturdy.Training.CompletedSet do
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(completed_set, attrs) do
-    editable = fn
-      %__MODULE__{planned_set_id: nil} -> [:movement_id | SetMetrics.fields()]
-      %__MODULE__{} -> SetMetrics.fields() -- [:side]
-    end
-
     completed_set
-    |> cast(attrs, [:completed_at | editable.(completed_set)])
+    |> cast(attrs, [:completed_at | editable_fields(completed_set)])
     |> validate_required([:movement_id, :completed_at])
     |> SetMetrics.validate()
     |> assoc_constraint(:movement)
   end
+
+  @doc """
+  The fields a user may edit: everything on unplanned work; only the
+  measurements (not movement or side) on a completed plan.
+  """
+  @spec editable_fields(t()) :: [atom()]
+  def editable_fields(%__MODULE__{planned_set_id: nil}), do: [:movement_id | SetMetrics.fields()]
+  def editable_fields(%__MODULE__{}), do: SetMetrics.fields() -- [:side]
 
   @doc """
   Completes a pending plan: a completed set pre-filled with the plan's movement,
