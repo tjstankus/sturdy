@@ -99,6 +99,7 @@ defmodule SturdyWeb.DayLive do
         <section
           :for={{dom_id, group} <- @streams.groups}
           id={dom_id}
+          data-movement={group.movement.name}
           class="overflow-hidden rounded-box bg-base-100 shadow-sm"
         >
           <header class="flex items-baseline justify-between px-4 pt-3 pb-1">
@@ -135,16 +136,24 @@ defmodule SturdyWeb.DayLive do
     """
   end
 
-  # One row per entry; each state renders its own controls.
+  # One row per entry; each state renders its own controls. The data-*
+  # attributes describe the entry for machines (e.g. acceptance-test drivers).
   attr :entry, Entry, required: true
 
   defp entry(%{entry: %Entry{state: :pending}} = assigns) do
     ~H"""
-    <li id={"planned-#{@entry.planned_set.id}"} class="flex items-center gap-3 px-3 py-2">
+    <li
+      id={"planned-#{@entry.planned_set.id}"}
+      data-state="pending"
+      data-side={@entry.planned_set.side}
+      data-summary={SetFormat.summary(@entry.planned_set)}
+      class="flex items-center gap-3 px-3 py-2"
+    >
       <button
         id={"complete-#{@entry.planned_set.id}"}
         phx-click="complete"
         phx-value-id={@entry.planned_set.id}
+        data-action="mark_done"
         class="grid size-11 shrink-0 place-items-center rounded-full border-2 border-base-300 text-base-content/30 transition active:scale-95 active:border-primary active:text-primary"
         aria-label="Mark done"
       >
@@ -159,6 +168,7 @@ defmodule SturdyWeb.DayLive do
       <.link
         id={"edit-plan-#{@entry.planned_set.id}"}
         navigate={~p"/planned/#{@entry.planned_set}/edit"}
+        data-action="edit"
         class="p-2 text-base-content/60"
         aria-label="Edit plan"
       >
@@ -168,6 +178,7 @@ defmodule SturdyWeb.DayLive do
         id={"skip-#{@entry.planned_set.id}"}
         phx-click="skip"
         phx-value-id={@entry.planned_set.id}
+        data-action="skip"
         data-confirm="Skip this set? Skipping is final."
         class="p-2 text-base-content/60"
         aria-label="Skip"
@@ -178,6 +189,7 @@ defmodule SturdyWeb.DayLive do
         id={"delete-plan-#{@entry.planned_set.id}"}
         phx-click="delete_plan"
         phx-value-id={@entry.planned_set.id}
+        data-action="delete"
         data-confirm="Delete this planned set?"
         class="p-2 text-base-content/60"
         aria-label="Delete plan"
@@ -188,28 +200,59 @@ defmodule SturdyWeb.DayLive do
     """
   end
 
-  defp entry(%{entry: %Entry{state: :done}} = assigns) do
+  defp entry(%{entry: %Entry{state: :done, completed_set: completed_set}} = assigns) do
+    # A done entry either completes a plan (undo returns the plan to pending)
+    # or is unplanned work (removing it deletes it).
+    origin = fn
+      %Entry{planned_set: nil} ->
+        %{
+          planned: nil,
+          note: "unplanned",
+          action: "delete",
+          label: "Delete",
+          confirm: "Delete this completed set?"
+        }
+
+      %Entry{planned_set: planned_set} ->
+        planned = SetFormat.summary(planned_set)
+
+        %{
+          planned: planned,
+          note: planned != SetFormat.summary(completed_set) && "planned #{planned}",
+          action: "undo",
+          label: "Undo",
+          confirm: "Undo? The plan goes back to pending."
+        }
+    end
+
+    assigns =
+      assign(assigns,
+        origin: origin.(assigns.entry),
+        local_time: Sturdy.LocalTime.to_local(completed_set.completed_at)
+      )
+
     ~H"""
-    <li id={"completed-#{@entry.completed_set.id}"} class="flex items-center gap-3 px-3 py-2">
+    <li
+      id={"completed-#{@entry.completed_set.id}"}
+      data-state="done"
+      data-side={@entry.completed_set.side}
+      data-summary={SetFormat.summary(@entry.completed_set)}
+      data-planned={@origin.planned}
+      data-time={Calendar.strftime(@local_time, "%H:%M")}
+      class="flex items-center gap-3 px-3 py-2"
+    >
       <span class="grid size-11 shrink-0 place-items-center rounded-full bg-success text-success-content">
         <.icon name="hero-check" class="size-6" />
       </span>
-      <.link navigate={~p"/completed/#{@entry.completed_set}/edit"} class="min-w-0 flex-1">
+      <.link
+        navigate={~p"/completed/#{@entry.completed_set}/edit"}
+        data-action="edit"
+        class="min-w-0 flex-1"
+      >
         <p>{SetFormat.summary(@entry.completed_set)}</p>
         <p class="truncate text-xs text-base-content/60">
-          {@entry.completed_set.completed_at
-          |> Sturdy.LocalTime.to_local()
-          |> Calendar.strftime("%-I:%M %p")}
-          <span :if={is_nil(@entry.planned_set)}>· unplanned</span>
-          <span
-            :if={
-              @entry.planned_set &&
-                SetFormat.summary(@entry.planned_set) != SetFormat.summary(@entry.completed_set)
-            }
-            class="italic"
-          >
-            · planned {SetFormat.summary(@entry.planned_set)}
-          </span>
+          {Calendar.strftime(@local_time, "%-I:%M %p")}
+          <span :if={@origin.note} class="italic">· {@origin.note}</span>
           <span :if={@entry.completed_set.notes}>· {@entry.completed_set.notes}</span>
         </p>
       </.link>
@@ -217,14 +260,10 @@ defmodule SturdyWeb.DayLive do
         id={"undo-#{@entry.completed_set.id}"}
         phx-click="delete_completed"
         phx-value-id={@entry.completed_set.id}
-        data-confirm={
-          if(@entry.planned_set,
-            do: "Undo? The plan goes back to pending.",
-            else: "Delete this completed set?"
-          )
-        }
+        data-action={@origin.action}
+        data-confirm={@origin.confirm}
         class="p-2 text-base-content/60"
-        aria-label={if(@entry.planned_set, do: "Undo", else: "Delete")}
+        aria-label={@origin.label}
       >
         <.icon name="hero-arrow-uturn-left" class="size-5" />
       </button>
@@ -234,7 +273,13 @@ defmodule SturdyWeb.DayLive do
 
   defp entry(%{entry: %Entry{state: :skipped}} = assigns) do
     ~H"""
-    <li id={"planned-#{@entry.planned_set.id}"} class="flex items-center gap-3 px-3 py-2 opacity-50">
+    <li
+      id={"planned-#{@entry.planned_set.id}"}
+      data-state="skipped"
+      data-side={@entry.planned_set.side}
+      data-summary={SetFormat.summary(@entry.planned_set)}
+      class="flex items-center gap-3 px-3 py-2 opacity-50"
+    >
       <span class="grid size-11 shrink-0 place-items-center rounded-full border-2 border-dashed border-base-300">
         <.icon name="hero-forward" class="size-5" />
       </span>
@@ -243,6 +288,7 @@ defmodule SturdyWeb.DayLive do
         id={"delete-plan-#{@entry.planned_set.id}"}
         phx-click="delete_plan"
         phx-value-id={@entry.planned_set.id}
+        data-action="delete"
         data-confirm="Delete this skipped plan?"
         class="p-2"
         aria-label="Delete plan"

@@ -71,7 +71,7 @@ defmodule SturdyWeb.MovementLive.Index do
         <li id="no-movements" class="hidden only:block p-6 text-center text-base-content/60">
           No movements yet.
         </li>
-        <li :for={{dom_id, movement} <- @streams.movements} id={dom_id}>
+        <li :for={{dom_id, movement} <- @streams.movements} id={dom_id} data-movement={movement.name}>
           <.link
             navigate={~p"/movements/#{movement}"}
             class="flex items-center gap-3 px-4 py-3 active:bg-base-200"

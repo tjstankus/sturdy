@@ -31,6 +31,7 @@ defmodule Sturdy.MixProject do
     [
       preferred_envs: [
         precommit: :test,
+        acceptance: :test,
         coveralls: :test,
         "coveralls.html": :test,
         "coveralls.detail": :test
@@ -108,8 +109,12 @@ defmodule Sturdy.MixProject do
         "deps.unlock --unused",
         "format",
         "credo --strict",
-        "coveralls"
-      ]
+        "coveralls",
+        # A second VM: the test task cannot run twice in one.
+        "cmd mix acceptance"
+      ],
+      # The acceptance stage: executable specifications, on every driver.
+      acceptance: ["test --only acceptance"]
     ]
   end
 end
