@@ -1,5 +1,18 @@
 This is a web application written using the Phoenix web framework.
 
+## Acceptance specs are human-owned
+
+- **Never** create, edit, move, or delete anything in `test/acceptance/specs/`.
+  Those executable specifications state what the system must do. They are
+  written and changed by people only.
+- You **may** change everything beneath them: the DSL, drivers, and `WebUI`
+  in `test/support/acceptance/`, and production code. Make the specs pass by
+  changing those.
+- If a spec seems wrong, contradictory, or impossible to satisfy, **stop and
+  ask**. Never weaken a spec, skip it, or tag it out to get green.
+- Claude Code enforces this with deny rules and a hook in `.claude/settings.json`.
+  See `test/acceptance/README.md` for the four-layer structure.
+
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues

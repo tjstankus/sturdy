@@ -111,7 +111,9 @@ defmodule Sturdy.MixProject do
         "credo --strict",
         "coveralls",
         # A second VM: the test task cannot run twice in one.
-        "cmd mix acceptance"
+        "cmd mix acceptance",
+        # The guard that keeps agents out of the specs (see AGENTS.md).
+        "cmd python3 -m unittest discover -s .claude/hooks -q"
       ],
       # The acceptance stage: executable specifications, on every driver.
       acceptance: ["test --only acceptance"]

@@ -124,16 +124,29 @@ of from styling or visible text.
 ## Held-back specs
 
 Specs are the humans' statement of what the system must do, so coding agents
-may change layers 2–4 but never layer 1. In this repo that is enforced for
-Claude Code by the following. (Pending: these are added once the first
-draft of the specs has been reviewed.)
+may change layers 2–4 but never layer 1. In this repo Claude Code enforces
+that in `.claude/settings.json`:
 
-- `deny` rules for `Edit`/`Write`/`NotebookEdit` on `test/acceptance/specs/**`
-  in `.claude/settings.json`, and
-- a `PreToolUse` hook on `Bash` (`.claude/hooks/protect_specs.py`) that
-  refuses shell commands that would write under that directory.
+- A `deny` rule `Edit(test/acceptance/specs/**)`. File-path rules use `Edit`
+  for every file-writing tool (Edit, Write, NotebookEdit).
+- A `PreToolUse` hook (`.claude/hooks/protect_specs.py`) on the file tools
+  and `Bash`, as a second layer:
+  - File tools: refuses any target inside the directory, after resolving
+    `..` and symlinks.
+  - Shell commands that mention the directory: refused unless every part is
+    known to be read-only (`cat`, `grep`, `sed -n`, `git diff`,
+    `mix acceptance`, …). Writes, redirection, `tee`, interpreters
+    (`python -c`, `perl -i`), `git checkout`/`restore`, `find -delete` and
+    anything unrecognised are refused. It's an allowlist: unknown means no.
+  - The hook has its own tests: `python3 -m unittest discover .claude/hooks`.
 
 `AGENTS.md` states the rule for any agent.
+
+Limits, on purpose: this is a guardrail against an agent "fixing" a spec to
+get green, not a security boundary. A command that never names the
+directory (say, a variable built at runtime) isn't caught. Likewise a plain
+`mix format` (part of `mix precommit`) reformats specs along with
+everything else. That's layout only, never meaning.
 
 ## Copying this into another project
 
