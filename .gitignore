@@ -39,3 +39,6 @@ npm-debug.log
 
 # Python bytecode from the Claude Code hook tests
 __pycache__/
+
+# Local secrets
+.env
