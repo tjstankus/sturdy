@@ -102,7 +102,21 @@ defmodule SturdyWeb.Layouts do
   def flash_group(assigns) do
     ~H"""
     <div id={@id} aria-live="polite">
-      <.flash kind={:info} flash={@flash} />
+      <%!-- Notices dismiss themselves; errors stay until dismissed. --%>
+      <.flash kind={:info} flash={@flash} phx-hook=".AutoDismiss" data-dismiss-after="2500" />
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".AutoDismiss">
+        // Dismisses the flash after data-dismiss-after ms, the same way a tap
+        // does: clicking runs its phx-click (clear the flash, then hide it).
+        export default {
+          mounted() { this.schedule() },
+          updated() { this.schedule() },
+          destroyed() { clearTimeout(this.timer) },
+          schedule() {
+            clearTimeout(this.timer)
+            this.timer = setTimeout(() => this.el.click(), Number(this.el.dataset.dismissAfter))
+          }
+        }
+      </script>
       <.flash kind={:error} flash={@flash} />
 
       <.flash

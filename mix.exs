@@ -116,7 +116,8 @@ defmodule Sturdy.MixProject do
         "cmd python3 -m unittest discover -s .claude/hooks -q"
       ],
       # The acceptance stage: executable specifications, on every driver.
-      acceptance: ["test --only acceptance"]
+      # Assets first, so the browser driver tests the current JavaScript.
+      acceptance: ["assets.build", "test --only acceptance"]
     ]
   end
 end
