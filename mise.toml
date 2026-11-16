@@ -1,0 +1,5 @@
+# Loads the local, uncommitted .env (production settings and secrets) whenever
+# you're in this project, so prod commands need no `source .env` first.
+# Dev and test configs don't read these variables.
+[env]
+_.file = { path = ".env", redact = true }
