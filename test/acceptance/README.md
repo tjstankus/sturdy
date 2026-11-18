@@ -5,6 +5,10 @@ the language of the problem domain that say **what** the system does, never
 **how** it does it, and run against the real system through interchangeable
 protocol drivers.
 
+This is the quick reference. For the design, an end-to-end walkthrough, the
+pitfalls, and how to copy the approach, see
+[`docs/acceptance-testing.md`](../../docs/acceptance-testing.md).
+
 ```
 mix acceptance                          # every spec on every driver
 STURDY_DRIVER=live_view mix acceptance  # just one driver (live_view | browser)
